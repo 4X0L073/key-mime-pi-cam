@@ -15,7 +15,7 @@ formatter = logging.Formatter(
     '%(asctime)s %(name)-15s %(levelname)-4s %(message)s', '%Y-%m-%d %H:%M:%S')
 handler.setFormatter(formatter)
 root_logger.addHandler(flask.logging.default_handler)
-root_logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
+root_logger.setLevel(os.environ.get('LOG_LEVEL', 'WARN'))
 
 app = flask.Flask(__name__, static_url_path='')
 socketio = flask_socketio.SocketIO(app)
