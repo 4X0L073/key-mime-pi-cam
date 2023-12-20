@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "key-mime-pi"
+version = "0.1.0"
+description = ""
+authors = []
+readme = "README.md"
+packages = [{ include = "app" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+eventlet = "^0.33.3"
+Flask = "^1.1.1"
+Flask-SocketIO = "^4.3.2"
+MarkupSafe = "^1.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
