@@ -1,6 +1,23 @@
 # Key Mime Pi
 
-[![CircleCI](https://circleci.com/gh/mtlynch/key-mime-pi.svg?style=svg)](https://circleci.com/gh/mtlynch/key-mime-pi) [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](LICENSE)
+[![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](LICENSE)
+
+## READ THIS FIRST
+
+This is a fork of Key Mime Pi with updated dependencies.
+
+### Installation
+
+```text
+$ git clone https://github.com/VictorWTang/key-mime-pi.git
+$ pip install ./key-mime-pi
+```
+
+### Usage
+
+```text
+$ key-mime-pi
+```
 
 ## Deprecation
 
@@ -118,8 +135,8 @@ To enable Key Mime Pi's Git hooks, run:
 
 Key Mime Pi accepts various options through environment variables:
 
-| Environment Variable | Default      | Description |
-|----------------------|--------------|-------------|
+| Environment Variable | Default      | Description                                           |
+| -------------------- | ------------ | ----------------------------------------------------- |
 | `HOST`               | `0.0.0.0`    | Network interface to listen for incoming connections. |
-| `PORT`               | `8000`       | HTTP port to listen for incoming connections. |
-| `HID_PATH`           | `/dev/hidg0` | Path to keyboard HID interface. |
+| `PORT`               | `8000`       | HTTP port to listen for incoming connections.         |
+| `HID_PATH`           | `/dev/hidg0` | Path to keyboard HID interface.                       |
