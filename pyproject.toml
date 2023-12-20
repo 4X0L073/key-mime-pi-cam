@@ -13,6 +13,8 @@ Flask = "^1.1.1"
 Flask-SocketIO = "^4.3.2"
 MarkupSafe = "^1.1.1"
 
+[tool.poetry.scripts]
+key-mime-pi = 'app.main:main'
 
 [build-system]
 requires = ["poetry-core"]

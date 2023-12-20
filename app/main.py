@@ -74,7 +74,7 @@ def index_get():
     return flask.render_template('index.html')
 
 
-if __name__ == '__main__':
+def run(app, socketio, host, port, debug):
     socketio.run(app,
                  host=host,
                  port=port,
@@ -84,3 +84,9 @@ if __name__ == '__main__':
                      './app/templates/index.html', './app/static/js/app.js',
                      './app/static/css/style.css'
                  ])
+
+def main():
+    run(app, socketio, host, port, debug)
+
+if __name__ == '__main__':
+    main()
