@@ -12,6 +12,7 @@ eventlet = "^0.33.3"
 Flask = "^1.1.1"
 Flask-SocketIO = "^4.3.2"
 MarkupSafe = "^1.1.1"
+uvicorn = "^0.17.0"
 
 [tool.poetry.scripts]
 key-mime-pi = 'app.main:main'
