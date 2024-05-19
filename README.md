@@ -10,7 +10,7 @@ This is a fork of a fork of Key Mime Pi with planned picamera2 compatibility
 
 ```text
 $ git clone https://github.com/4X0L073/key-mime-pi-cam
-$ pip install ./key-mime-pi
+$ pip install ./key-mime-pi-cam
 ```
 
 ### Usage
