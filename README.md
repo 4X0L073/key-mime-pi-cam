@@ -4,12 +4,12 @@
 
 ## READ THIS FIRST
 
-This is a fork of Key Mime Pi with updated dependencies.
+This is a fork of a fork of Key Mime Pi with planned picamera2 compatibility
 
 ### Installation
 
 ```text
-$ git clone https://github.com/VictorWTang/key-mime-pi.git
+$ git clone https://github.com/4X0L073/key-mime-pi-cam
 $ pip install ./key-mime-pi
 ```
 
