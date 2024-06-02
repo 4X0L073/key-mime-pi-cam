@@ -1,191 +1,78 @@
-import base64
-from main import picam2, StreamingOutput, app, socketio
+# Klon von https://github.com/shillehbean/youtube-p2/blob/main/stream_usb_camera.py
+from flask import Flask, Response
+from picamera2 import Picamera2
+import cv2
 
-# Event handler for connecting clients
-@socketio.on('connect')
-def connect():
-    print('Client connected')
-    # Start capturing video
-    picam2.start_recording(StreamingOutput())
+# Globale Variable, um den Status der Kamera zu verfolgen
+camera_running = True
+# Erstellen einer Flask-Anwendung
+app = Flask(__name__)
 
-# Event handler for disconnecting clients
-@socketio.on('disconnect')
-def disconnect():
-    print('Client disconnected')
-    # Stop capturing video
-    picam2.stop_recording()
+# Initialisierung der Kamera mit Picamera2
+camera = Picamera2()
+# Konfiguration der Kamera für das Hauptbild mit Format XRGB8888 und Größe 640x480 Pixel
+camera.configure(camera.create_preview_configuration(main={"format": 'XRGB8888', "size": (640, 480)}))
+# Starten der Kamera
+camera.start()
 
-# Emitting video frames to clients
-@socketio.on('stream')
-def stream(data):
-    if data['command'] == 'start':
-        # Start sending frames
-        while True:
-            with StreamingOutput.lock:
-                frame = StreamingOutput.frame
-            # Encode the frame to base64 and emit it
-            encoded_frame = base64.b64encode(frame).decode('utf-8')
-            socketio.emit('frame', {'data': encoded_frame})
-            # Check if the command is 'stop'
-            if data['command'] == 'stop':
-                # Stop sending frames
-                break
+# Funktion zum Generieren von Bildern im Echtzeit-Stream
+def generate_frames():
+    global camera_running
+    # Solange die Kamera läuft
+    while camera_running:
+        # Erfasse ein Bild von der Kamera
+        frame = camera.capture_array()
+        # Kodiere das Bild in das JPEG-Format
+        ret, buffer = cv2.imencode('.jpg', frame)
+        # Konvertiere das Bild in Bytes
+        frame = buffer.tobytes()
+        # Wenn die Kodierung erfolgreich ist
+        if ret:
+            # Erzeuge ein Response-Objekt mit dem Bild
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        else:
+            # Gib eine Fehlermeldung aus, falls die Kodierung fehlschlägt
+            print("Fehler beim Kodieren des Bildes")
 
+# Definiere die Route für die Videoübertragung
+@app.route('/')
+def video_feed():
+    # Rückgabe eines Responses mit dem generierten Frame-Stream und MIME-Typ für einen gemischten Ersetzungsansatz    
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    '''
+    mimetype steht kurz für Multipurpose Internet Mail Extensions Type
+    Das spezielle MimeType multipart/x-mixed-replace wird oft für Live-Streams verwendet, 
+    da es dem Client ermöglicht, dynamische Inhalte zu aktualisieren, 
+    indem alte Inhalte durch neue ersetzt werden, ohne die gesamte Seite neu laden zu müssen.
+    '''
+
+# Definiere die Route zum Starten der Kamera
+@app.route('/start_camera')
+def start_camera():
+    global camera_running
+    # Setze den Status der Kamera auf aktiv
+    camera_running = True
+    # Gebe eine Bestätigungsmeldung zurück
+    return "Kamera gestartet"
+
+# Definiere die Route zum Stoppen der Kamera
+@app.route('/stop_camera')
+def stop_camera():
+    global camera_running
+    # Setze den Status der Kamera auf inaktiv
+    camera_running = False
+    # Gebe eine Bestätigungsmeldung zurück
+    return "Kamera gestoppt"
+
+# Starten der Flask-Anwendung ohne Debugging, auf allen Netzwerkschnittstellen lauschen und Port 8001 verwenden
 if __name__ == '__main__':
-    socketio.run(app, host='localhost', port=5000)
-
-
-# import socketio
-# import picamera2
-# import io
-# import base64
-# import logging
-# from threading import Thread
-
-# # Initialize Socket.IO server
-# sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins="*")
-# app = socketio.ASGIApp(sio)
-
-# # Configure the camera
-# picam2 = picamera2.Picamera2()
-# picam2.configure(picam2.create_video_configuration(main={"size": (640, 480), "format": "jpeg"}))
-
-# # Output class to hold the latest frame
-# class StreamingOutput(io.BufferedIOBase):
-#     def __init__(self):
-#         super().__init__()
-#         self.frame = None
-
-#     def write(self, buf):
-#         with self.lock:
-#             self.frame = buf
-
-# # Event handler for connecting clients
-# @sio.event
-# async def connect(sid, environ):
-#     print(f"Client connected: {sid}")
-#     # Start capturing video
-#     picam2.start_recording(StreamingOutput())
-
-# # Event handler for disconnecting clients
-# @sio.event
-# async def disconnect(sid):
-#     print(f"Client disconnected: {sid}")
-#     # Stop capturing video
-#     picam2.stop_recording()
-
-# # Emitting video frames to clients
-# @sio.event
-# async def stream(sid, data):
-#     if data['command'] == 'start':
-#         # Start sending frames
-#         while True:
-#             with output.lock:
-#                 frame = output.frame
-#             # Encode the frame to base64 and emit it
-#             encoded_frame = base64.b64encode(frame).decode('utf-8')
-#             await sio.emit('frame', {'data': encoded_frame}, room=sid)
-#             # Check if the command is 'stop'
-#             if data['command'] == 'stop':
-#                 # Stop sending frames
-#                 break
-
-
-# if __name__ == '__main__':
-#     import uvicorn
-#     uvicorn.run(app, host='localhost', port=5000)
-
-
-# # # Mostly copied from https://picamera.readthedocs.io/en/release-1.13/recipes2.html
-# # # Run this script, then point a web browser at http:<this-ip-address>:7123
-# # # Note: needs simplejpeg to be installed (pip3 install simplejpeg).
-
-# # import io
-# # import socketserver
-# # import logging
-# # from http import server
-# # from threading import Condition
-
-# # from picamera2 import Picamera2
-# # from picamera2.encoders import JpegEncoder
-# # from picamera2.outputs import FileOutput
-
-# # PAGE = """\
-# # <html>
-# # <head>
-# # <title>picamera2 MJPEG streaming demo</title>
-# # </head>
-# # <body>
-# # <h1>Picamera2 MJPEG Streaming Demo</h1>
-# # <img src="stream.mjpg" width="640" height="480" />
-# # </body>
-# # </html>
-# # """
-
-# # class StreamingOutput(io.BufferedIOBase):
-# #     def __init__(self):
-# #         self.frame = None
-# #         self.condition = Condition()
-
-# #     def write(self, buf):
-# #         with self.condition:
-# #             self.frame = buf
-# #             self.condition.notify_all()
-
-
-# # class StreamingHandler(server.BaseHTTPRequestHandler):
-# #     def do_GET(self):
-# #         if self.path == '/':
-# #             self.send_response(301)
-# #             self.send_header('Location', '/index.html')
-# #             self.end_headers()
-# #         elif self.path == '/index.html':
-# #             content = PAGE.encode('utf-8')
-# #             self.send_response(200)
-# #             self.send_header('Content-Type', 'text/html')
-# #             self.send_header('Content-Length', len(content))
-# #             self.end_headers()
-# #             self.wfile.write(content)
-# #         elif self.path == '/stream.mjpg':
-# #             self.send_response(200)
-# #             self.send_header('Age', 0)
-# #             self.send_header('Cache-Control', 'no-cache, private')
-# #             self.send_header('Pragma', 'no-cache')
-# #             self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
-# #             self.end_headers()
-# #             try:
-# #                 while True:
-# #                     with output.condition:
-# #                         output.condition.wait()
-# #                         frame = output.frame
-# #                     self.wfile.write(b'--FRAME\r\n')
-# #                     self.send_header('Content-Type', 'image/jpeg')
-# #                     self.send_header('Content-Length', len(frame))
-# #                     self.end_headers()
-# #                     self.wfile.write(frame)
-# #                     self.wfile.write(b'\r\n')
-# #             except Exception as e:
-# #                 logging.warning(
-# #                     'Removed streaming client %s: %s',
-# #                     self.client_address, str(e))
-# #         else:
-# #             self.send_error(404)
-# #             self.end_headers()
-
-
-# # class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
-# #     allow_reuse_address = True
-# #     daemon_threads = True
-
-
-# # picam2 = Picamera2()
-# # picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
-# # output = StreamingOutput()
-# # picam2.start_recording(JpegEncoder(), FileOutput(output))
-
-# # try:
-# #     address = ('', 7123)
-# #     server = StreamingServer(address, StreamingHandler)
-# #     server.serve_forever()
-# # finally:
-# #     picam2.stop_recording()
+    app.run(debug=False, host='0.0.0.0', port=8001)
+    
+'''
+Dieser Code erstellt eine einfache Webanwendung, die Bilder von einer USB-Kamera in Echtzeit über einen HTTP-Stream liefert.
+Die Kamera wird konfiguriert, um Bilder im Format XRGB8888 mit einer Auflösung von 640x480 Pixeln aufzunehmen.
+Diese Bilder werden dann in einem kontinuierlichen Loop erfasst, kodiert und als Byte-String ausgegeben, 
+der als Teil eines multipart/mixed-replace HTTP-Antwortkörpers verwendet wird. Der Client, der diesen Stream empfängt, 
+kann die einzelnen Bilder basierend auf dem Boundary-Namen frame korrekt parsen und anzeigen.
+'''
