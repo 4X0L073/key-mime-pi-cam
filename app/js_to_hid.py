@@ -1,5 +1,7 @@
 import dataclasses
-
+import hid
+from time import time
+from app.main import logger, hid_path
 
 class Error(Exception):
     pass
@@ -146,6 +148,14 @@ _JS_TO_HID_KEYCODES = {
     221: 0x30,  # Right bracket (], })
     222: 0x34,  # Single quote
     223: 0x35,  # Accent grave (`)
+
+    # German keys (not tested yet)
+    180: 0x7a,  # Ö
+    181: 0x78,  # Ä
+    182: 0x64,  # Ü
+    183: 0x76,  # Ö
+    184: 0x67,  # Ü
+    185: 0x66,  # Ä
 }
 
 
@@ -163,3 +173,35 @@ def convert(js_key_event):
         raise UnrecognizedKeyCodeError(
             'Unrecognized key code %s (%d)' %
             (js_key_event.key, js_key_event.key_code))
+
+
+# Funktion zum Ausführen der Tastatureingabeautomatisierung
+def automate_key_input(text, delay, addtime):
+    keycode_array = text.split(',')
+    if addtime:
+        keycode_array.append("," + datetime_to_hid())
+    for keycode_str in keycode_array:
+        keycode = int(keycode_str)  # Umwandlung von Zeichenfolge in Ganzzahl
+        try:
+            hid_hex_keycode = _JS_TO_HID_KEYCODES[keycode]
+            # Da Modifizierer-Tasten ignoriert werden, wird immer 0 für control_keys gesendet
+            hid.send(hid_path, 0, hid_hex_keycode)
+        except KeyError:
+            logger.warning(f'not recognized keycode: {keycode}')
+        time.sleep(delay)
+
+
+def datetime_to_hid():
+    date = time.strftime("%d-%m-%Y--%H-%M")
+    res_string = ""
+    for char in date:
+        if char.isdigit():  # Check if the character is a digit
+            res_string += str(ord(char))  # Get the unicode point value of the character directly
+        elif char == "-":
+            res_string += str(189)  # Use the js_keycode for the minus sign
+        else:
+            pass
+        if char != date[-1]: #if it's not the last character, add a comma
+            res_string += ","
+    return res_string
+    
