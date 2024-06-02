@@ -9,8 +9,8 @@ set -e
 # Treat undefined environment variables as errors.
 set -u
 
-if ! grep 'dtoverlay=dwc2' /boot/config; then
-  echo "dtoverlay=dwc2" >> /boot/config.txt
+if ! grep 'dtoverlay=dwc2' /boot/firmware/config; then
+  echo "dtoverlay=dwc2" >> /boot/firmware/config.txt
 fi
 
 if ! grep dwc2 /etc/modules; then
