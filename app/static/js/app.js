@@ -7,51 +7,51 @@ const processingQueue = [];
 
 function onSocketConnect() {
   connected = true;
-  document.getElementById('status-connected').style.display = 'inline-block';
-  document.getElementById('status-disconnected').style.display = 'none';
-  document.getElementById('instructions').style.visibility = 'visible';
-  document.getElementById('disconnect-reason').style.visibility = 'hidden';
+  document.getElementById("status-connected").style.display = "inline-block";
+  document.getElementById("status-disconnected").style.display = "none";
+  document.getElementById("instructions").style.visibility = "visible";
+  document.getElementById("disconnect-reason").style.visibility = "hidden";
 }
 
 function onSocketDisconnect(reason) {
   connected = false;
-  document.getElementById('status-connected').style.display = 'none';
-  document.getElementById('status-disconnected').style.display = 'inline-block';
-  document.getElementById('disconnect-reason').style.visibility = 'visible';
-  document.getElementById('disconnect-reason').innerText = 'Error: ' + reason;
-  document.getElementById('instructions').style.visibility = 'hidden';
+  document.getElementById("status-connected").style.display = "none";
+  document.getElementById("status-disconnected").style.display = "inline-block";
+  document.getElementById("disconnect-reason").style.visibility = "visible";
+  document.getElementById("disconnect-reason").innerText = "Error: " + reason;
+  document.getElementById("instructions").style.visibility = "hidden";
 }
 
 function limitRecentKeys(limit) {
-  const recentKeysDiv = document.getElementById('recent-keys');
+  const recentKeysDiv = document.getElementById("recent-keys");
   while (recentKeysDiv.childElementCount > limit) {
     recentKeysDiv.removeChild(recentKeysDiv.firstChild);
   }
 }
 
 function addKeyCard(key, keystrokeId) {
-  const card = document.createElement('div');
-  card.classList.add('key-card');
-  if (key === ' ') {
-    card.innerHTML = '&nbsp;';
+  const card = document.createElement("div");
+  card.classList.add("key-card");
+  if (key === " ") {
+    card.innerHTML = "&nbsp;";
   } else {
     card.innerText = key;
   }
-  card.setAttribute('keystroke-id', keystrokeId);
-  document.getElementById('recent-keys').appendChild(card);
+  card.setAttribute("keystroke-id", keystrokeId);
+  document.getElementById("recent-keys").appendChild(card);
   limitRecentKeys(10);
 }
 
 function updateKeyStatus(keystrokeId, success) {
-  const recentKeysDiv = document.getElementById('recent-keys');
+  const recentKeysDiv = document.getElementById("recent-keys");
   const cards = recentKeysDiv.children;
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i];
-    if (parseInt(card.getAttribute('keystroke-id')) === keystrokeId) {
+    if (parseInt(card.getAttribute("keystroke-id")) === keystrokeId) {
       if (success) {
-        card.classList.add('processed-key-card');
+        card.classList.add("processed-key-card");
       } else {
-        card.classList.add('unsupported-key-card');
+        card.classList.add("unsupported-key-card");
       }
       return;
     }
@@ -71,12 +71,12 @@ function onKeyDown(evt) {
 
   let location = null;
   if (evt.location === 1) {
-    location = 'left';
+    location = "left";
   } else if (evt.location === 2) {
-    location = 'right';
+    location = "right";
   }
-  
-  socket.emit('keystroke', {
+
+  socket.emit("keystroke", {
     metaKey: evt.metaKey,
     altKey: evt.altKey,
     shiftKey: evt.shiftKey,
@@ -89,17 +89,43 @@ function onKeyDown(evt) {
 
 function onDisplayHistoryChanged(evt) {
   if (evt.target.checked) {
-    document.getElementById('recent-keys').style.visibility = 'visible';
+    document.getElementById("recent-keys").style.visibility = "visible";
   } else {
-    document.getElementById('recent-keys').style.visibility = 'hidden';
+    document.getElementById("recent-keys").style.visibility = "hidden";
     limitRecentKeys(0);
   }
 }
 
-document.querySelector('body').addEventListener("keydown", onKeyDown);
-document.getElementById('display-history-checkbox').addEventListener("change", onDisplayHistoryChanged);
-socket.on('connect', onSocketConnect);
-socket.on('disconnect', onSocketDisconnect);
-socket.on('keystroke-received', (data) => {
+document.querySelector("body").addEventListener("keydown", onKeyDown);
+document
+  .getElementById("display-history-checkbox")
+  .addEventListener("change", onDisplayHistoryChanged);
+socket.on("connect", onSocketConnect);
+socket.on("disconnect", onSocketDisconnect);
+socket.on("keystroke-received", (data) => {
   updateKeyStatus(processingQueue.shift(), data.success);
 });
+
+document
+  .getElementById("automateForm")
+  .addEventListener("submit", async function (event) {
+    // Event-Listener für das Formular
+    event.preventDefault(); // Standardaktion von Submit verhindern
+
+    const text = document.getElementById("text").value; // Abrufen des Texts aus dem Eingabefeld
+    const delay = parseFloat(document.getElementById("delay").value); // Abrufen der Verzögerung aus dem Eingabefeld
+    const addTime = document.getElementById("addTime").checked;
+
+    const response = await fetch(`${location.origin}/automate`, {
+      // Daten an den Server senden
+      method: "POST", // HTTP-Methode
+      headers: {
+        // Header für die Anfrage
+        "Content-Type": "application/json", // Inhaltsart der Anfrage
+      },
+      body: JSON.stringify({ text, delay, addTime }), //Daten in das JSON-Format konvertieren und senden
+    });
+
+    const result = await response.json(); // Antwort des Servers in JSON-Format konvertieren
+    alert(JSON.stringify(result)); // Meldungsfenster mit dem Inhalt der Antwort anzeigen
+  });
