@@ -12,7 +12,7 @@ import js_to_hid
 import threading
 
 
-root_logger = logging.getLogger()
+root_logger = logging.getLogger(__name__)
 #handler = logging.StreamHandler()
 handler = logging.FileHandler('app.log')
 formatter = logging.Formatter(
@@ -22,8 +22,8 @@ handler.setFormatter(formatter)
 root_logger.addHandler(handler)
 root_logger.setLevel(logging.INFO)
 
-app = flask.Flask(__name__, static_url_path='')
-socketio = flask_socketio.SocketIO(app)
+my_app = flask.Flask(__name__, static_url_path='')
+socketio = flask_socketio.SocketIO(my_app)
 
 logger = logging.getLogger(__name__)
 logger.info('Starting app')
@@ -31,7 +31,7 @@ logger.info('Starting app')
 host = os.environ.get('HOST', '0.0.0.0')
 port = int(os.environ.get('PORT', 8000))
 debug = 'DEBUG' in os.environ
-# Ort des HID-Dateigriffs, in dem die Tastatur-HID-Eingabe geschrieben wird.
+# Ort des HID-Datei, in dem die Tastatur-HID-Eingabe geschrieben wird.
 hid_path = os.environ.get('HID_PATH', '/dev/hidg0')
 
 def _parse_key_event(payload):
@@ -72,23 +72,24 @@ def test_disconnect():
     logger.info('Client disconnected')
 
 # Route für die Indexseite
-@app.route('/', methods=['GET'])
+@my_app.route('/', methods=['GET'])
 def index_get():
     return flask.render_template('index.html')
 
 
 # Endpunkt zum Starten der Tastatureingabeautomatisierung
-@app.route('/automate', methods=['POST'])
+@my_app.route('/automate', methods=['POST'])
 def automate_post():
     data = flask.request.json
     text = data.get('text')
     delay = data.get('delay', 0.5)  # Standardverzögerung auf 0.5 Sekunden, falls nicht angegeben
-    threading.Thread(target=js_to_hid.automate_key_input, args=(text, delay, True)).start() # Addtime = True should be replaced with a boolean taken from a checkbox in index.html placed after the delay field
+    addTime = data.get('addTime', False)
+    threading.Thread(target=js_to_hid.automate_key_input, args=(text, delay, addTime)).start()
     return {'status': 'success', 'message': 'Automatisierung gestartet'}
 
 # Start der Flask-Anwendung
 if __name__ == '__main__':
-    socketio.run(app,
+    socketio.run(my_app,
                  host=host,
                  port=port,
                  debug=debug,
