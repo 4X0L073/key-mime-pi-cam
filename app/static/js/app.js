@@ -112,7 +112,7 @@ document
     // Event-Listener für das Formular
     event.preventDefault(); // Standardaktion von Submit verhindern
 
-    const text = document.getElementById("text").value; // Abrufen des Texts aus dem Eingabefeld
+    const commandsList = document.getElementById("commandsList").value; // Abrufen des Texts aus dem Eingabefeld
     const delay = parseFloat(document.getElementById("delay").value); // Abrufen der Verzögerung aus dem Eingabefeld
     const addTime = document.getElementById("addTime").checked;
 
@@ -123,9 +123,17 @@ document
         // Header für die Anfrage
         "Content-Type": "application/json", // Inhaltsart der Anfrage
       },
-      body: JSON.stringify({ text, delay, addTime }), //Daten in das JSON-Format konvertieren und senden
+      body: JSON.stringify({ commandsList, delay, addTime }), //Daten in das JSON-Format konvertieren und senden
     });
 
     const result = await response.json(); // Antwort des Servers in JSON-Format konvertieren
-    alert(JSON.stringify(result)); // Meldungsfenster mit dem Inhalt der Antwort anzeigen
+    
+    const alertTimeout = setTimeout(() => {
+      alert(JSON.stringify(result));
+    }, 5000); // Close the alert dialog after 5 seconds
+  
+    setTimeout(() => {
+      clearTimeout(alertTimeout); // Clear the timeout to prevent the alert from closing prematurely
+      alert(JSON.stringify(result));
+    }, 5000);
   });
