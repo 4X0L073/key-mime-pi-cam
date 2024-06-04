@@ -81,11 +81,12 @@ def index_get():
 @my_app.route('/automate', methods=['POST'])
 def automate_post():
     data = flask.request.json
-    text = data.get('text')
+    commandsList = data.get('commandsList', [])
     delay = data.get('delay', 0.5)  # Standardverzögerung auf 0.5 Sekunden, falls nicht angegeben
     addTime = data.get('addTime', False)
-    threading.Thread(target=js_to_hid.automate_key_input, args=(text, delay, addTime)).start()
-    return {'status': 'success', 'message': 'Automatisierung gestartet'}
+    threading.Thread(target=js_to_hid.automate_key_input, args=(commandsList, delay, addTime)).start()
+    return flask.jsonify({'status': 'success', 'message': 'Automatisierung gestartet'})
+    #return {'status': 'success', 'message': 'Automatisierung gestartet'}
 
 # Start der Flask-Anwendung
 if __name__ == '__main__':
