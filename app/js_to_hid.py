@@ -1,7 +1,9 @@
 import dataclasses
 import hid
-from time import time
-from app.main import logger, hid_path
+import time
+
+from main import logger, hid_path
+
 
 class Error(Exception):
     pass
@@ -178,8 +180,11 @@ def convert(js_key_event):
 # Funktion zum Ausführen der Tastatureingabeautomatisierung
 def automate_key_input(text, delay, addtime):
     keycode_array = text.split(',')
+    count = 0
     if addtime:
-        keycode_array.append("," + datetime_to_hid())
+        keycode_array += datetime_to_hid()
+        logger.info(f'{keycode_array} + " count: " + {count}')
+        count += 1
     for keycode_str in keycode_array:
         keycode = int(keycode_str)  # Umwandlung von Zeichenfolge in Ganzzahl
         try:
@@ -193,15 +198,13 @@ def automate_key_input(text, delay, addtime):
 
 def datetime_to_hid():
     date = time.strftime("%d-%m-%Y--%H-%M")
-    res_string = ""
+    res_arr = []
     for char in date:
         if char.isdigit():  # Check if the character is a digit
-            res_string += str(ord(char))  # Get the unicode point value of the character directly
+            res_arr.append(str(ord(char)))  # Get the unicode point value of the character directly
         elif char == "-":
-            res_string += str(189)  # Use the js_keycode for the minus sign
+            res_arr.append(str(189))  # Use the js_keycode for the minus sign
         else:
-            pass
-        if char != date[-1]: #if it's not the last character, add a comma
-            res_string += ","
-    return res_string
-    
+            pass            
+    return res_arr
+
