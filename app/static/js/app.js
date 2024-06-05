@@ -127,13 +127,17 @@ document
     });
 
     const result = await response.json(); // Antwort des Servers in JSON-Format konvertieren
-    
-    const alertTimeout = setTimeout(() => {
-      alert(JSON.stringify(result));
-    }, 5000); // Close the alert dialog after 5 seconds
-  
-    setTimeout(() => {
-      clearTimeout(alertTimeout); // Clear the timeout to prevent the alert from closing prematurely
-      alert(JSON.stringify(result));
-    }, 5000);
+    alert(JSON.stringify(result)); // Meldungsfenster mit dem Inhalt der Antwort anzeigen
   });
+
+  
+document.getElementById("load_config").addEventListener("click", async function() {
+  try {
+    const response = await fetch("/load_json");
+    const data = await response.json();
+    // Use the loaded JSON data here
+    console.log(data);
+  } catch (error) {
+    console.error('Error loading JSON:', error);
+  }
+});
