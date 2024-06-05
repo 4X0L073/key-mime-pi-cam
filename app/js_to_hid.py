@@ -138,6 +138,12 @@ _JS_TO_HID_KEYCODES = {
     173: 0x2d,  # Minus
     179: 0xe8,  # Media play/pause
     168: 0xfa,  # Refresh
+    180: 0x7a,  # Ö
+    181: 0x78,  # Ä
+    182: 0x64,  # Ü
+    183: 0x76,  # Ö
+    184: 0x67,  # Ü
+    185: 0x66,  # Ä
     186: 0x33,  # Semicolon
     187: 0x2e,  # Equal sign
     188: 0x36,  # Comma
@@ -149,15 +155,7 @@ _JS_TO_HID_KEYCODES = {
     220: 0x31,  # Back slash
     221: 0x30,  # Right bracket (], })
     222: 0x34,  # Single quote
-    223: 0x35,  # Accent grave (`)
-
-    # German keys (not tested yet)
-    180: 0x7a,  # Ö
-    181: 0x78,  # Ä
-    182: 0x64,  # Ü
-    183: 0x76,  # Ö
-    184: 0x67,  # Ü
-    185: 0x66,  # Ä
+    223: 0x35,  # Accent grave (`)    
 }
 
 
@@ -175,16 +173,29 @@ def convert(js_key_event):
         raise UnrecognizedKeyCodeError(
             'Unrecognized key code %s (%d)' %
             (js_key_event.key, js_key_event.key_code))
+        
+
+# Insert timestamp into the list where the keycode is equal to "x", and return the new list(without the "x" element)
+def insert_timestamp(lst):
+    result = []
+    keycodes_arr_with_delay = [(keycode, 0.1) for keycode in datetime_to_hid()]
+    for idx, (keycode, delay) in enumerate(lst):
+        if keycode == "x":
+            result = lst[:idx] + keycodes_arr_with_delay + lst[idx:]
+            result.remove((keycode,delay))
+            break
+        else: 
+            return lst
+    return result
 
 
 # Funktion zum Ausführen der Tastatureingabeautomatisierung
 def automate_key_input(text, delay, addtime):
+    logger.info(text)
     keycode_array = text.split(',')
-    count = 0
     if addtime:
         keycode_array += datetime_to_hid()
-        logger.info(f'{keycode_array} + " count: " + {count}')
-        count += 1
+        logger.info(keycode_array)
     for keycode_str in keycode_array:
         keycode = int(keycode_str)  # Umwandlung von Zeichenfolge in Ganzzahl
         try:
@@ -194,17 +205,35 @@ def automate_key_input(text, delay, addtime):
         except KeyError:
             logger.warning(f'not recognized keycode: {keycode}')
         time.sleep(delay)
+        
+
+# Funktion zum Ausführen der Tastatureingabeautomatisierung mit individuellen delayangaben
+def automate_key_input_with_individual_delay(commands_list=["",0], add_time=False):
+    lst_with_timestamp = ["",0]
+    if add_time:
+        lst_with_timestamp = insert_timestamp(commands_list)
+        logger.info(f'commands list with timestamp: {lst_with_timestamp}')
+    for keycode_str, delay in commands_list:        
+        keycode_int = int(keycode_str)  # Umwandlung von Zeichenfolge in Ganzzahl
+        try:
+            hid_hex_keycode = _JS_TO_HID_KEYCODES[keycode_int]
+            # Da Modifizierer-Tasten ignoriert werden, wird immer 0 für control_keys gesendet
+            hid.send(hid_path, 0, hid_hex_keycode)
+        except KeyError:
+            logger.warning(f'not recognized keycode: {keycode_int}')
+        time.sleep(delay)
 
 
 def datetime_to_hid():
-    date = time.strftime("%d-%m-%Y--%H-%M")
-    res_arr = []
-    for char in date:
+    dtime = time.strftime("--%d.%m.%Y--%H.%M")
+    timestamp_arr = []
+    for char in dtime:
         if char.isdigit():  # Check if the character is a digit
-            res_arr.append(str(ord(char)))  # Get the unicode point value of the character directly
+            timestamp_arr.append(str(ord(char)))  # Get the unicode point value of the character directly
         elif char == "-":
-            res_arr.append(str(189))  # Use the js_keycode for the minus sign
+            timestamp_arr.append(str(191))  # Use the js_keycode for the minus sign
+        elif char == ".":
+            timestamp_arr.append(str(190))
         else:
             pass            
-    return res_arr
-
+    return timestamp_arr
