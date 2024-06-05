@@ -33,16 +33,20 @@
   </div>
   <div align="center">
     <form id="automateForm">
-      <label for="text">Key Sequence:</label>
-      <input type="text" id="text" name="text" required>
+      <label for="commandsList">Key Sequence:</label>
+      <input type="text" id="commandsList" name="commandsList" required>
       <label for="delay">Delay (seconds):</label>
       <input type="number" id="delay" name="delay" min="0" max="60" step="0.1" required>
       <label for="addtime">Add Timestamp:</label>
       <input type="checkbox" id="addTime" name="addTime">
-      <button type="submit">Submit</button>
+      <button type="submit">Start automation</button>
     </form>
   </div>
+  <div>
+    <button id="load_config">Load Tizen 3.0 template</button>
+  </div>
 
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="/third-party/socket.io/2.3.0/socket.io.js"></script>
   <script src="/js/app.js"></script>
 </body>
