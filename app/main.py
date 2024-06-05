@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import json
 import logging
 import os
 
@@ -35,12 +36,14 @@ debug = 'DEBUG' in os.environ
 hid_path = os.environ.get('HID_PATH', '/dev/hidg0')
 
 def _parse_key_event(payload):
-    return js_to_hid.JavaScriptKeyEvent(meta_modifier=payload['metaKey'],
-                                        alt_modifier=payload['altKey'],
-                                        shift_modifier=payload['shiftKey'],
-                                        ctrl_modifier=payload['ctrlKey'],
-                                        key=payload['key'],
-                                        key_code=payload['keyCode'])
+    return js_to_hid.JavaScriptKeyEvent(
+        meta_modifier=payload.get('metaKey', False),
+        alt_modifier=payload.get('altKey', False),
+        shift_modifier=payload.get('shiftKey', False),
+        ctrl_modifier=payload.get('ctrlKey', False),
+        key=payload.get('key', ''),
+        key_code=payload.get('keyCode', 0)
+    )
 
 # Behandlung von Tastatur-Ereignissen vom Client
 @socketio.on('keystroke')
@@ -87,6 +90,23 @@ def automate_post():
     threading.Thread(target=js_to_hid.automate_key_input, args=(commandsList, delay, addTime)).start()
     return flask.jsonify({'status': 'success', 'message': 'Automatisierung gestartet'})
     #return {'status': 'success', 'message': 'Automatisierung gestartet'}
+
+
+def make_list_from_json(path):
+    data_list = []
+    with open(path) as f:
+        data = json.load(f)
+        for element in data['keycodes_with_delay']:
+            data_list.append((element['key'], element['delay']))
+    return data_list
+
+
+@my_app.route('/load_json', methods=['POST'])
+def automate_post_with_individual_delay():
+    mod_path =os.path.join(os.path.dirname(__file__), 'static', 'json', 'tizen_config.json')
+    keycodes_list = make_list_from_json(mod_path)
+    threading.Thread(target=js_to_hid.automate_key_input_with_individual_delay, args=(keycodes_list,)).start()
+    return flask.jsonify({'status': 'success', 'message': 'Automatisierung gestartet'})
 
 # Start der Flask-Anwendung
 if __name__ == '__main__':
