@@ -169,16 +169,9 @@
         {"key": "32", "delay": 0.5}    
       ],
     "universal_template": [
-      {"key": "116", "delay": 1.5},  
-      {"key": "36", "delay": 1},   
-      {"key": "39", "delay": 1},   
-      {"key": "13", "delay": 1},   
-      {"key": "40", "delay": 1},   
-      {"key": "40", "delay": 1},   
-      {"key": "13", "delay": 2.5},   
-      {"key": "37", "delay": 1},   
-      {"key": "13", "delay": 3.5},     
-      {"key": "36", "delay": 0.5},    
-      {"key": "13", "delay": 10.0}
+      {"key": "52", "delay": 0.5},   
+      {"key": "48", "delay": 0.5},
+      {"key": "52", "delay": 0.5},   
+      {"key": "48", "delay": 0.5}
     ]
 }

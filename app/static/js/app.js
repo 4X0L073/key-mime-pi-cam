@@ -130,6 +130,11 @@ document
     alert(JSON.stringify(result)); // Meldungsfenster mit dem Inhalt der Antwort anzeigen
   });
 
+document.getElementById("stop_automation").addEventListener("click", async function () {
+  const response = await fetch(`${location.origin}/stop_automation`);
+  const result = await response.json();
+  alert(JSON.stringify(result));
+});
   
 document
   .getElementById("load_config")

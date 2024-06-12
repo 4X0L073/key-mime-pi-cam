@@ -3,14 +3,13 @@
 import json
 import logging
 import os
+import threading
 
 import flask
 import flask_socketio
 
 import hid
 import js_to_hid
-
-import threading
 
 
 root_logger = logging.getLogger(__name__)
@@ -35,6 +34,10 @@ port = int(os.environ.get('PORT', 8000))
 debug = 'DEBUG' in os.environ
 # Ort des HID-Datei, in dem die Tastatur-HID-Eingabe geschrieben wird.
 hid_path = os.environ.get('HID_PATH', '/dev/hidg0')
+
+automation_thread = None
+stop_event = threading.Event()
+
 
 def _parse_key_event(payload):
     return js_to_hid.JavaScriptKeyEvent(
@@ -88,9 +91,17 @@ def automate_post():
     commandsList = data.get('commandsList', [])
     delay = data.get('delay', 0.5)  # Standardverzögerung auf 0.5 Sekunden, falls nicht angegeben
     addTime = data.get('addTime', False)
-    threading.Thread(target=js_to_hid.automate_key_input, args=(commandsList, delay, addTime)).start()
+    #js_to_hid.automate_key_input(commandsList, delay, addTime)
+    global automation_thread, stop_event
+    if automation_thread and automation_thread.is_alive():
+        return flask.jsonify({'status': 'error', 'message': 'Automatisierung läuft bereits'})
+    elif automation_thread and not automation_thread.is_alive():
+        del automation_thread
+    stop_event.clear()    
+    automation_thread = threading.Thread(target=js_to_hid.automate_key_input, args=(commandsList, delay, addTime, stop_event))
+    automation_thread.start()
     return flask.jsonify({'status': 'success', 'message': 'Automatisierung gestartet'})
-    #return {'status': 'success', 'message': 'Automatisierung gestartet'}
+
 
 # Take version number from the select dropdown in index.html
 def make_list_from_json_versioned(path, version):
@@ -103,8 +114,6 @@ def make_list_from_json_versioned(path, version):
                 local_version = str(version)
             else:
                 local_version = f"tizen_{int(version)}_config"
-
-            logger.info(f"version: {version}, path: {path}, local_version: {local_version}")
             with open(path) as f:
                 data = json.load(f)
                 for element in data[local_version]:
@@ -113,15 +122,36 @@ def make_list_from_json_versioned(path, version):
         logger.warning(f"File not found: {path}")
     return data_list
 
+
 @my_app.route('/load_json', methods=['GET'])
 def load_automation_file():
     selectedVersion = flask.request.args.get('tizen_ver', type=str)  # Ensure that selectedVersion is always a string, even if it's None
-    logger.info(f'selected Version %s',selectedVersion)
+    logger.info(f'selected Version %s', selectedVersion)
     mod_path = os.path.join(os.path.dirname(__file__), 'static', 'json', 'tizen_config.json')
     logger.info(mod_path)
-    keycodes_list = make_list_from_json_versioned(mod_path, selectedVersion)
-    threading.Thread(target=js_to_hid.automate_key_input_with_individual_delay, args=(keycodes_list, True)).start()
+    keycodes_list = make_list_from_json_versioned(mod_path, str(selectedVersion))
+    logger.info(f'keycodes_list: %s selected version: %s', keycodes_list, str(selectedVersion))
+    global automation_thread, stop_event
+    if automation_thread and automation_thread.is_alive():
+        return flask.jsonify({'status': 'error', 'message': 'Automatisierung läuft bereits'})
+    elif automation_thread and not automation_thread.is_alive():
+        del automation_thread
+    stop_event.clear()
+    automation_thread = threading.Thread(target=js_to_hid.automate_key_input_with_individual_delay, args=(keycodes_list, stop_event))
+    automation_thread.start()
     return flask.jsonify({'status': 'success', 'message': 'Automatisierung gestartet'})
+
+
+@my_app.route('/stop_automation', methods=['GET'])
+def stop_automation():
+    global automation_thread, stop_event
+    if automation_thread and automation_thread.is_alive():
+        stop_event.set()
+        automation_thread.join()
+        automation_thread = None
+        return flask.jsonify({'status': 'success', 'message': 'Automatisierung gestoppt'})
+    else:
+        return flask.jsonify({'status': 'error', 'message': 'Automatisierung wurde nicht gestartet'})
 
 # Start der Flask-Anwendung
 if __name__ == '__main__':
@@ -135,11 +165,3 @@ if __name__ == '__main__':
                      './app/static/css/style.css'
                  ])
 
-
-# @my_app.route('/load_json/<selectedVersion>', methods=['GET'])
-# def load_automation_file(selectedVersion):
-#     mod_path =os.path.join(os.path.dirname(__file__), 'static', 'json', 'tizen_config.json')
-#     logger.info(mod_path)
-#     keycodes_list = make_list_from_json_versioned(mod_path, selectedVersion)
-#     threading.Thread(target=js_to_hid.automate_key_input_with_individual_delay, args=(keycodes_list, True)).start()
-#     return flask.jsonify({'status': 'success', 'message': 'Automatisierung gestartet'})

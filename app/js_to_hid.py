@@ -184,18 +184,20 @@ def insert_timestamp(lst):
             result = lst[:idx] + keycodes_arr_with_delay + lst[idx:]
             result.remove((keycode,delay))
             break
-        
-    return result
+    logger.info("list without timestamp: %s", result)
+    return lst
 
 
 # Funktion zum Ausführen der Tastatureingabeautomatisierung
-def automate_key_input(text, delay, addtime):
+def automate_key_input(text, delay, addtime, stop_event):
     logger.info(text)
     keycode_array = text.split(',')
     if addtime:
         keycode_array += datetime_to_hid()
         logger.info(keycode_array)
     for keycode_str in keycode_array:
+        if stop_event.is_set():
+            break
         keycode = int(keycode_str)  # Umwandlung von Zeichenfolge in Ganzzahl
         try:
             hid_hex_keycode = _JS_TO_HID_KEYCODES[keycode]
@@ -207,12 +209,13 @@ def automate_key_input(text, delay, addtime):
         
 
 # Funktion zum Ausführen der Tastatureingabeautomatisierung mit individuellen delayangaben
-def automate_key_input_with_individual_delay(commands_list=["",0], add_time=False):
+def automate_key_input_with_individual_delay(commands_list, stop_event):
     lst_with_timestamp = ["",0]
-    if add_time:
-        lst_with_timestamp = insert_timestamp(commands_list)
-        logger.info(f'commands list with timestamp: {lst_with_timestamp}')
-    for keycode_str, delay in lst_with_timestamp:        
+    lst_with_timestamp = insert_timestamp(commands_list)
+    logger.info(f'commands list with timestamp: {lst_with_timestamp}')
+    for keycode_str, delay in lst_with_timestamp:
+        if stop_event.is_set():
+            break
         keycode_int = int(keycode_str)  # Umwandlung von Zeichenfolge in Ganzzahl
         try:
             hid_hex_keycode = _JS_TO_HID_KEYCODES[keycode_int]
