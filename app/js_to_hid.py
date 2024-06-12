@@ -184,8 +184,7 @@ def insert_timestamp(lst):
             result = lst[:idx] + keycodes_arr_with_delay + lst[idx:]
             result.remove((keycode,delay))
             break
-        else: 
-            return lst
+        
     return result
 
 
@@ -213,7 +212,7 @@ def automate_key_input_with_individual_delay(commands_list=["",0], add_time=Fals
     if add_time:
         lst_with_timestamp = insert_timestamp(commands_list)
         logger.info(f'commands list with timestamp: {lst_with_timestamp}')
-    for keycode_str, delay in commands_list:        
+    for keycode_str, delay in lst_with_timestamp:        
         keycode_int = int(keycode_str)  # Umwandlung von Zeichenfolge in Ganzzahl
         try:
             hid_hex_keycode = _JS_TO_HID_KEYCODES[keycode_int]

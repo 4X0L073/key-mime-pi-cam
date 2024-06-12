@@ -26,12 +26,8 @@
         <label for="display-history-checkbox">Show history</label>
       </form>
     </div>
-    <p>
-      Key Mime Pi is released under the <a href="https://opensource.org/licenses/MIT">MIT License</a>.
-      <a href="https://github.com/mtlynch/key-mime-pi">Source code</a> is available.
-    </p>
   </div>
-  <div align="center">
+  <div id="automations">
     <form id="automateForm">
       <label for="commandsList">Key Sequence:</label>
       <input type="text" id="commandsList" name="commandsList" required>
@@ -41,11 +37,21 @@
       <input type="checkbox" id="addTime" name="addTime">
       <button type="submit">Start automation</button>
     </form>
+ </div> 
+  <div id="tizen_templates">
+    <select name="tizen_version" id="tizen_ver_select">
+      <option value="24">Ver 2.4</option>
+      <option value="30">Ver 3.0</option>
+      <option value="40">Ver 4.0</option>
+      <option value="universal_template" selected>Universal template</option>
+    </select>
+    <button id="load_config">Load Tizen template</button>
   </div>
-  <div>
-    <button id="load_config">Load Tizen 3.0 template</button>
-  </div>
-
+  <br>
+  <p align="center">
+      Key Mime Pi is released under the <a href="https://opensource.org/licenses/MIT">MIT License</a>.
+      <a href="https://github.com/mtlynch/key-mime-pi">Source code</a> is available.
+    </p>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="/third-party/socket.io/2.3.0/socket.io.js"></script>
   <script src="/js/app.js"></script>

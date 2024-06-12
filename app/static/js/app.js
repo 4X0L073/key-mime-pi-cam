@@ -131,9 +131,12 @@ document
   });
 
   
-document.getElementById("load_config").addEventListener("click", async function() {
+document
+  .getElementById("load_config")
+  .addEventListener("click", async function () {
   try {
-    const response = await fetch("/load_json");
+    const selectedVersion = document.getElementById("tizen_ver_select").value;
+    const response = await fetch(`${location.origin}/load_json?tizen_ver=${selectedVersion}`);
     const data = await response.json();
     // Use the loaded JSON data here
     console.log(data);
